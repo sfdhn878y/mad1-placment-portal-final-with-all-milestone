@@ -150,6 +150,93 @@ class Application(db.Model):
 # APP START
 # =====================
 
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+
+
+
+
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        name = request.form["name"]
+        email = request.form["email"]
+        password = request.form["password"]
+        role = request.form["role"]  # student / company
+
+        # block admin registration
+        if role == "admin":
+            return "Admin cannot be registered"
+
+        if User.query.filter_by(email=email).first():
+            return "Email already registered"
+
+        user = User(
+            name=name,
+            email=email,
+            password=password,
+            role=role,
+            is_approved=False if role == "company" else True
+        )
+
+        db.session.add(user)
+        db.session.commit()
+    return render_template("register.html")
+
+
+
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            print('186 line ')
+            return "No user found"
+
+        
+        if user.password != password:
+            print(user.password, password)
+            return "Wrong password"
+
+        if user.role == "company" and not user.is_approved:
+            return "u are not approved"
+
+    
+
+        if user.role == "Admin":
+            return redirect('admin_dashboard')
+
+        elif user.role == "company":
+            return redirect('company_dashboard')
+
+        elif user.role == "student":
+            return redirect('student_dashboard')
+
+    return render_template("login.html")
+
+
+@app.route("/company_dashboard")
+def company_dashboard():
+    return "thsi is companyd ashboar"
+
+@app.route("/student_dashboard")
+def student_dashboard():
+    return "thsi is student_dashboard ashboar"
+
+@app.route("/admin_dashboard")
+def admin_dashboard():
+    return "thsi is admin_dashboard ashboar"
+    
 if __name__ == "__main__":
 
     with app.app_context():
