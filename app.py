@@ -232,7 +232,54 @@ def login():
 
 @app.route("/company_dashboard")
 def company_dashboard():
-    return render_template('company_dashboard.html')
+    all_users = User.query.all() # select * from users;
+    return render_template('company_dashboard.html',all_users=all_users)
+
+
+@app.route("/complete-company-profile", methods=["GET", "POST"])
+def complete_company_profile():
+
+    if not session.get('user_id'):
+        return redirect('login')
+
+    user_id = session['user_id']
+    company = CompanyProfile.query.filter_by(user_id=user_id).first()
+
+    if request.method == "POST":
+
+        # ✅ CASE 1: Profile exists → UPDATE
+
+
+        if company:
+            print('thise is update ')
+            company.company_name = request.form["company_name"]
+            company.industry = request.form["industry"]
+            company.website = request.form["website"]
+            company.location = request.form["location"]
+            company.company_size = request.form["company_size"]
+
+            db.session.commit()
+            return redirect("/company_dashboard")
+        else:
+            print('thsi si insert')
+            company = CompanyProfile(
+                user_id=user_id,
+                company_name=request.form["company_name"],
+                industry=request.form["industry"],
+                website=request.form["website"],
+                location=request.form["location"],
+                company_size=request.form["company_size"],
+            )   
+            db.session.add(company)
+
+            db.session.commit()
+
+            return redirect("/company_dashboard")
+    return render_template("complete_company_profile.html")
+
+
+
+
 
 @app.route("/student_dashboard")
 def student_dashboard():
