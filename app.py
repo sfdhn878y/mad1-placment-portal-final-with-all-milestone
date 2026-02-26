@@ -232,8 +232,12 @@ def login():
 
 @app.route("/company_dashboard")
 def company_dashboard():
-    all_users = User.query.all() # select * from users;
-    return render_template('company_dashboard.html',all_users=all_users)
+
+    company = CompanyProfile.query.filter_by(
+        user_id=session["user_id"]
+    ).first()    
+
+    return render_template('company_dashboard.html',  company =  company )
 
 
 @app.route("/complete-company-profile", methods=["GET", "POST"])
