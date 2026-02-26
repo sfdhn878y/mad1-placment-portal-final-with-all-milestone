@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///placement.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
+app.config["SECRET_KEY"] = "mysecret123"
 db = SQLAlchemy(app)
 
 # =====================
@@ -199,6 +199,7 @@ def login():
         password = request.form["password"]
 
         user = User.query.filter_by(email=email).first()
+       
         if not user:
             print('186 line ')
             return "No user found"
@@ -207,6 +208,10 @@ def login():
         if user.password != password:
             print(user.password, password)
             return "Wrong password"
+        
+
+        session['user_id'] = user.id
+        session['role'] = user.role
 
         if user.role == "company" and not user.is_approved:
             return "u are not approved"
@@ -227,16 +232,20 @@ def login():
 
 @app.route("/company_dashboard")
 def company_dashboard():
-    return "thsi is companyd ashboar"
+    return render_template('company_dashboard.html')
 
 @app.route("/student_dashboard")
 def student_dashboard():
-    return "thsi is student_dashboard ashboar"
+    return render_template('student_dashboard.html')
 
 @app.route("/admin_dashboard")
 def admin_dashboard():
-    return "thsi is admin_dashboard ashboar"
-    
+    return render_template('admin_dashboard.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('login')
 if __name__ == "__main__":
 
     with app.app_context():

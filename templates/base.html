@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Placement Portal{% endblock %}</title>
+
+  <style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    body {
+        background: #0f172a;
+        color: #e2e8f0;
+    }
+
+    /* NAVBAR */
+    .navbar {
+        background: rgba(2, 6, 23, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 18px 80px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #1e293b;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    .logo {
+        font-size: 22px;
+        font-weight: bold;
+        color: #38bdf8;
+        letter-spacing: 1px;
+    }
+
+    .nav-links {
+        display: flex;
+        align-items: center;
+    }
+
+    .nav-links a {
+        color: #cbd5e1;
+        margin-left: 35px;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 15px;
+        position: relative;
+        transition: 0.3s ease;
+    }
+
+    /* Hover underline animation */
+    .nav-links a::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -6px;
+        width: 0%;
+        height: 2px;
+        background: #38bdf8;
+        transition: 0.3s ease;
+    }
+
+    .nav-links a:hover {
+        color: #38bdf8;
+    }
+
+    .nav-links a:hover::after {
+        width: 100%;
+    }
+
+    /* CTA Button Style */
+    .nav-btn {
+        margin-left: 40px;
+        padding: 8px 18px;
+        background: #38bdf8;
+        color: #020617 !important;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: 0.3s;
+    }
+
+    .nav-btn:hover {
+        background: #0ea5e9;
+        transform: translateY(-2px);
+    }
+
+    footer {
+        background: #020617;
+        text-align: center;
+        padding: 20px;
+        margin-top: 60px;
+        border-top: 1px solid #1e293b;
+        color: #94a3b8;
+    }
+
+    .container {
+        width: 85%;
+        margin: auto;
+    }
+</style>
+</head>
+<body>
+
+<div class="navbar">
+    <div class="logo">Placement Portal</div>
+
+    <div class="nav-links">
+        <a href="/">Home</a>
+        {% if session.get('user_id') %}
+           <a href="/logout">Logout</a>
+        {% endif %}
+        {% if not session.get('user_id') %}
+         <a href="/login">Login</a>
+         <a href="/register" class="nav-btn">Register</a>
+        {% endif %}
+    </div>
+</div>
+
+{% block content %}{% endblock %}
+
+<footer>
+    © 2026 Placement Portal | All Rights Reserved
+</footer>
+
+</body>
+</html>
