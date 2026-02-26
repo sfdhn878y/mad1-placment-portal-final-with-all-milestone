@@ -155,6 +155,32 @@ class Application(db.Model):
 def index():
     return render_template('index.html')
 
+@app.route('/post-job',methods=['GET','POST'])
+def job_post():
+    if request.method == 'POST':
+        if "user_id" not in session:
+            return redirect("/login")
+
+        company = CompanyProfile.query.filter_by(user_id=session["user_id"]).first()
+
+        if not company:
+            return "Please complete company profile first"
+
+        if request.method == "POST":
+            job = Job(
+                company_id=company.id,
+                title=request.form["title"],
+                skills=request.form["skills"],
+                salary=request.form["salary"],
+
+            )
+
+            db.session.add(job)
+            db.session.commit()
+
+            return redirect("/company_dashboard")
+
+    return render_template('job_post.html')
 
 
 
@@ -236,7 +262,7 @@ def company_dashboard():
     company = CompanyProfile.query.filter_by(
         user_id=session["user_id"]
     ).first()    
-
+    
     return render_template('company_dashboard.html',  company =  company )
 
 
