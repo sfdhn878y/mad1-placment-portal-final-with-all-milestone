@@ -178,7 +178,7 @@ def job_post():
             db.session.add(job)
             db.session.commit()
 
-            return redirect("/company_dashboard")
+        return redirect("/company_dashboard")
 
     return render_template('job_post.html')
 
@@ -256,14 +256,46 @@ def login():
     return render_template("login.html")
 
 
+
 @app.route("/company_dashboard")
 def company_dashboard():
+    if "user_id" not in session:
+        return redirect("/login")
 
     company = CompanyProfile.query.filter_by(
         user_id=session["user_id"]
-    ).first()    
-    
-    return render_template('company_dashboard.html',  company =  company )
+    ).first()
+
+    if not company:
+        return redirect("/complete-company-profile")
+
+    jobs = Job.query.filter_by(company_id=company.id).all()
+
+    job_data = []
+    all_shortlisted = []   # ⭐ NEW LIST
+
+    for job in jobs:
+        total_apps = Application.query.filter_by(job_id=job.id).count()
+
+        shortlisted = Application.query.filter_by(
+            job_id=job.id,
+            status="Shortlisted"
+        ).all()
+
+        all_shortlisted.extend(shortlisted)  # ⭐ collect all
+
+        job_data.append({
+            "job": job,
+            "total_apps": total_apps
+        })
+
+    return render_template(
+        "company_dashboard.html",
+        company=company,
+        jobs=job_data,
+        shortlisted=all_shortlisted   # ⭐ PASS GLOBAL LIST
+    )
+
 
 
 @app.route("/complete-company-profile", methods=["GET", "POST"])
