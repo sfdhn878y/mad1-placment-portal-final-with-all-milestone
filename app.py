@@ -340,6 +340,43 @@ def complete_company_profile():
             return redirect("/company_dashboard")
     return render_template("complete_company_profile.html")
 
+@app.route("/job-applications/<int:job_id>")
+def view_applications(job_id):
+    applications = Application.query.filter_by(job_id=job_id).all()
+
+    return render_template(
+        "applications.html",
+        applications=applications
+    )
+
+@app.route("/toggle-status/<int:app_id>/<string:action>")
+def toggle_status(app_id, action):
+    if "user_id" not in session:
+        return redirect("/login")
+
+    application = Application.query.get_or_404(app_id)
+
+    if action == "shortlist":
+        if application.status == "Shortlisted":
+            application.status = "Applied"   # unshortlist
+        else:
+            application.status = "Shortlisted"
+
+    elif action == "select":
+        if application.status == "Selected":
+            application.status = "Shortlisted"   # unselect
+        else:
+            application.status = "Selected"
+
+    elif action == "reject":
+        if application.status == "Rejected":
+            application.status = "Applied"   # unreject
+        else:
+            application.status = "Rejected"
+
+    db.session.commit()
+
+    return redirect(request.referrer)
 
 ###########################
 
@@ -354,20 +391,18 @@ def student_dashboard():
 
     jobs = Job.query.filter_by(is_approved=True, is_closed=False).all()
 
-    applied_job_ids = []
+    applied_jobs = {}
 
     if student:
-        applied_job_ids = [
-            app.job_id for app in student.applications
-        ]
+        for app in student.applications:
+            applied_jobs[app.job_id] = app.status   # store job_id : status
 
     return render_template(
         "student_dashboard.html",
         student=student,
         jobs=jobs,
-        applied_job_ids=applied_job_ids
+        applied_jobs=applied_jobs
     )
-
 
 @app.route("/apply-job/<int:job_id>")
 def apply_job(job_id):
@@ -425,7 +460,7 @@ def complete_student_profile():
 
     return render_template("complete_student_profile.html", student=student)
 
-    
+
 #####################
 
 @app.route("/admin_dashboard")

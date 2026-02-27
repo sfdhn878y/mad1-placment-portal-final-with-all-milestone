@@ -75,9 +75,9 @@
             <p><b>Skills:</b> {{ job.skills }}</p>
             <p><b>Salary:</b> {{ job.salary }}</p>
 
-            {% if job.id in applied_job_ids %}
+            {% if job.id in applied_jobs %}
             <button class="btn" style="background: gray; cursor: not-allowed;">
-                Applied ✓
+                Applied ✓ ({{ applied_jobs[job.id] }})
             </button>
             {% else %}
             <a href="/apply-job/{{ job.id }}">
@@ -87,7 +87,6 @@
 
         </div>
         {% endfor %}
-
 
     </div>
 
