@@ -349,6 +349,41 @@ def view_applications(job_id):
         applications=applications
     )
 
+@app.route("/company/student/<int:student_id>")
+def view_student_profile(student_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if session.get("role") != "company":
+        return "Unauthorized", 403
+
+    user_id = session["user_id"]
+
+    company = CompanyProfile.query.filter_by(user_id=user_id).first()
+    if not company:
+        return "Company profile not found", 404
+
+    student = StudentProfile.query.filter_by(id=student_id).first()
+    if not student:
+        return "Student not found", 404
+
+    # using relationship instead of join
+    applications = [
+        app for app in student.applications
+        if app.job.company_id == company.id
+    ]
+
+    total_applied = len(applications)
+
+    return render_template(
+        "student_detail.html",
+        student=student,
+        applications=applications,
+        total_applied=total_applied
+    )
+
+    
 @app.route("/toggle-status/<int:app_id>/<string:action>")
 def toggle_status(app_id, action):
     if "user_id" not in session:

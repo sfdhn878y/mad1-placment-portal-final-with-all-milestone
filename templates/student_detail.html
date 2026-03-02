@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Student Profile</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #0f172a;
+            color: white;
+            padding: 40px;
+        }
+
+        .box {
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            background: #22c55e;
+            color: white;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border: 1px solid #334155;
+        }
+
+        th {
+            background: #1e293b;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Student Full Profile</h2>
+
+    <div class="box">
+        <p><b>Name:</b> {{ student.user.name }}</p>
+        <p><b>Email:</b> {{ student.user.email }}</p>
+        <p><b>Department:</b> {{ student.department }}</p>
+        <p><b>Year:</b> {{ student.year }}</p>
+        <p><b>CGPA:</b> {{ student.cgpa }}</p>
+        <p><b>Skills:</b> {{ student.skills }}</p>
+        <p><b>Placement Status:</b> {{ student.placement_status }}</p>
+
+        {% if student.resume %}
+        <a href="{{ url_for('static', filename='uploads/' + student.resume) }}">
+            <button class="btn">Download Resume</button>
+        </a>
+        {% endif %}
+    </div>
+    <h3>Total Jobs Applied in Your Company: {{ total_applied }}</h3>
+
+    {% if applications %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>Job Title</th>
+                <th>Description</th>
+                <th>Required Skills</th>
+                <th>Salary</th>
+                <th>Job Type</th>
+                <th>Status</th>
+                <th>Job Status</th>
+                <th>Applied Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in applications %}
+            <tr>
+                <td>{{ app.job.title }}</td>
+
+                <td style="max-width:200px;">
+                    {{ app.job.description }}
+                </td>
+
+                <td>{{ app.job.skills }}</td>
+
+                <td>{{ app.job.salary }}</td>
+
+                <td>{{ app.job.job_type }}</td>
+
+                <!-- Application Status -->
+                <td>
+                    {% if app.status == "Applied" %}
+                    <span style="color:#38bdf8;">Applied</span>
+                    {% elif app.status == "Shortlisted" %}
+                    <span style="color:#facc15;">Shortlisted</span>
+                    {% elif app.status == "Selected" %}
+                    <span style="color:#22c55e;">Selected</span>
+                    {% else %}
+                    <span style="color:#ef4444;">Rejected</span>
+                    {% endif %}
+                </td>
+
+                <!-- Job Open / Closed -->
+                <td>
+                    {% if app.job.is_closed %}
+                    <span style="color:#ef4444;">Closed</span>
+                    {% else %}
+                    <span style="color:#22c55e;">Open</span>
+                    {% endif %}
+                </td>
+
+                <td>{{ app.applied_at.strftime("%d %b %Y") }}</td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% else %}
+    <p>This student has not applied to any job of your company.</p>
+    {% endif %}
+
+    <br><br>
+
+    <a href="/company_dashboard">
+        <button class="btn">⬅ Back</button>
+    </a>
+
+</body>
+
+</html>
