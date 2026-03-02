@@ -44,7 +44,15 @@
 
 <body>
     <div class="container">
+        <!-- SEARCH BAR -->
+        <div class="card">
+            <form method="GET" action="/student_dashboard">
+                <input type="text" name="search" placeholder="Search by Company, Position, or Skills..."
+                    style="padding:10px; width:70%; border-radius:6px; border:none;">
 
+                <button class="btn">Search</button>
+            </form>
+        </div>
         <!-- PROFILE SECTION -->
         <div class="card">
             <h2>Student Profile</h2>
@@ -84,7 +92,11 @@
                 <button class="btn apply">Apply Job</button>
             </a>
             {% endif %}
-
+            <a href="/company-details/{{ job.company.id }}">
+                <button class="btn" style="background:#facc15;">
+                    View Company Details
+                </button>
+            </a>
         </div>
         {% endfor %}
 

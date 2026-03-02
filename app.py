@@ -151,7 +151,19 @@ class Application(db.Model):
 # APP START
 # =====================
 
+@app.route("/company-details/<int:company_id>")
+def company_details(company_id):
 
+    # get company profile
+    company = CompanyProfile.query.filter_by(id=company_id).first()
+
+    if not company:
+        return "Company not found", 404
+
+    return render_template(
+        "company_details.html",
+        company=company
+    )
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -297,6 +309,70 @@ def company_dashboard():
         shortlisted=all_shortlisted   # ⭐ PASS GLOBAL LIST
     )
 
+@app.route("/delete-job/<int:job_id>", methods=["POST"])
+def delete_job(job_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if session.get("role") != "company":
+        return "Unauthorized", 403
+
+    user_id = session["user_id"]
+
+    company = CompanyProfile.query.filter_by(user_id=user_id).first()
+    if not company:
+        return "Company profile not found", 404
+
+    job = Job.query.filter_by(id=job_id, company_id=company.id).first()
+    if not job:
+        return "Job not found", 404
+
+    # 🔥 Check if applications exist
+    application_count = Application.query.filter_by(job_id=job.id).count()
+
+    if application_count > 0:
+        return render_template(
+            "delete_warning.html",
+            job=job,
+            application_count=application_count
+        )
+
+    # If no applications → delete directly
+    db.session.delete(job)
+    db.session.commit()
+
+    return redirect("/company_dashboard")
+
+
+
+@app.route("/confirm-delete/<int:job_id>", methods=["POST"])
+def confirm_delete(job_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if session.get("role") != "company":
+        return "Unauthorized", 403
+
+    user_id = session["user_id"]
+
+    company = CompanyProfile.query.filter_by(user_id=user_id).first()
+    if not company:
+        return "Company not found", 404
+
+    job = Job.query.filter_by(id=job_id, company_id=company.id).first()
+    if not job:
+        return "Job not found", 404
+
+    # delete related applications first
+    Application.query.filter_by(job_id=job.id).delete()
+
+    db.session.delete(job)
+    db.session.commit()
+
+    return redirect("/company_dashboard")
+
 
 
 @app.route("/complete-company-profile", methods=["GET", "POST"])
@@ -417,20 +493,38 @@ def toggle_status(app_id, action):
 
 @app.route("/student_dashboard")
 def student_dashboard():
+
+    # check login
     if "user_id" not in session:
         return redirect("/login")
 
     user_id = session["user_id"]
 
+    # get student profile
     student = StudentProfile.query.filter_by(user_id=user_id).first()
 
-    jobs = Job.query.filter_by(is_approved=True, is_closed=False).all()
+    # get search value from URL
+    search = request.args.get("search")
 
+    # base query (only approved & open jobs)
+    jobs_query = Job.query.filter_by(is_approved=True, is_closed=False)
+
+    # if search exists -> filter
+    if search:
+        jobs_query = jobs_query.join(CompanyProfile).filter(
+            (CompanyProfile.company_name.ilike(f"%{search}%")) |
+            (Job.title.ilike(f"%{search}%")) |
+            (Job.skills.ilike(f"%{search}%"))
+        )
+
+    jobs = jobs_query.all()
+
+    # store applied jobs
     applied_jobs = {}
 
     if student:
         for app in student.applications:
-            applied_jobs[app.job_id] = app.status   # store job_id : status
+            applied_jobs[app.job_id] = app.status
 
     return render_template(
         "student_dashboard.html",

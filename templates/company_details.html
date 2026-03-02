@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    .container {
+        width: 700px;
+        margin: 50px auto;
+        color: white;
+    }
+
+    .card {
+        background: rgba(255,255,255,0.05);
+        padding: 25px;
+        border-radius: 10px;
+    }
+
+    .back-btn {
+        margin-top: 20px;
+        padding: 8px 12px;
+        background: #38bdf8;
+        border: none;
+        font-weight: bold;
+        cursor: pointer;
+    }
+</style>
+
+<div class="container">
+    <div class="card">
+
+        <h2>{{ company.company_name }}</h2>
+
+        <p><b>Industry:</b> {{ company.industry }}</p>
+        <p><b>Location:</b> {{ company.location }}</p>
+        <p><b>Company Size:</b> {{ company.company_size }}</p>
+        <p><b>Website:</b> 
+            <a href="{{ company.website }}" target="_blank">
+                {{ company.website }}
+            </a>
+        </p>
+
+        <hr>
+
+        <h3>Contact Details</h3>
+        <p><b>Email:</b> {{ company.user.email }}</p>
+        <p><b>Phone:</b> {{ company.user.phone }}</p>
+
+        <a href="/student_dashboard">
+            <button class="back-btn">⬅ Back</button>
+        </a>
+
+    </div>
+</div>
+
+{% endblock %}
