@@ -257,7 +257,7 @@ def login():
 
     
 
-        if user.role == "Admin":
+        if user.role == "admin":
             return redirect('admin_dashboard')
 
         elif user.role == "company":
@@ -591,10 +591,122 @@ def complete_student_profile():
 
 
 #####################
-
+# admin dashboard 
+#####################
 @app.route("/admin_dashboard")
 def admin_dashboard():
-    return render_template('admin_dashboard.html')
+
+    total_students = User.query.filter_by(role="student").count()
+    total_companies = User.query.filter_by(role="company").count()
+    total_jobs = Job.query.count()
+    total_applications = Application.query.count()
+
+    pending_companies = User.query.filter_by(role="company", is_approved=False).all()
+    pending_jobs = Job.query.filter_by(is_approved=False).all()
+
+    return render_template(
+        "admin_dashboard.html",
+        total_students=total_students,
+        total_companies=total_companies,
+        total_jobs=total_jobs,
+        total_applications=total_applications,
+        pending_companies=pending_companies,
+        pending_jobs=pending_jobs
+    )
+
+@app.route("/admin/company/<int:user_id>/approve")
+def approve_company(user_id):
+
+    user = User.query.get_or_404(user_id)
+    user.is_approved = True
+    db.session.commit()
+
+    return redirect("/admin_dashboard")
+
+
+@app.route("/admin/company/<int:user_id>/reject")
+def reject_company(user_id):
+
+    user = User.query.get_or_404(user_id)
+    user.is_active = False
+    db.session.commit()
+
+    return redirect("/admin/dashboard")
+
+@app.route("/admin/job/<int:job_id>/approve")
+def approve_job(job_id):
+
+    job = Job.query.get_or_404(job_id)
+    job.is_approved = True
+    db.session.commit()
+
+    return redirect("/admin/dashboard")
+
+
+@app.route("/admin/job/<int:job_id>/reject")
+def reject_job(job_id):
+
+    job = Job.query.get_or_404(job_id)
+    job.is_closed = True
+    db.session.commit()
+
+    return redirect("/admin/dashboard")
+
+
+
+
+@app.route("/admin/students")
+def view_students():
+
+    search = request.args.get("search")
+
+    query = User.query.filter_by(role="student")
+
+    if search:
+        query = query.filter(
+            (User.name.ilike(f"%{search}%")) |
+            (User.email.ilike(f"%{search}%")) |
+            (User.phone.ilike(f"%{search}%"))
+        )
+
+    students = query.all()
+
+    return render_template("admin_students.html", students=students)
+
+
+
+
+
+
+
+@app.route("/admin/companies")
+def view_companies():
+
+    search = request.args.get("search")
+
+    query = CompanyProfile.query
+
+    if search:
+        query = query.filter(
+            (CompanyProfile.company_name.ilike(f"%{search}%")) |
+            (CompanyProfile.industry.ilike(f"%{search}%"))
+        )
+
+    companies = query.all()
+
+    return render_template("admin_companies.html", companies=companies)
+
+@app.route("/admin/user/<int:user_id>/toggle")
+def toggle_user(user_id):
+
+    user = User.query.get_or_404(user_id)
+
+    # switch active status
+    user.is_active = not user.is_active
+
+    db.session.commit()
+
+    return redirect(request.referrer)
 
 @app.route('/logout')
 def logout():
@@ -606,13 +718,14 @@ if __name__ == "__main__":
 
     with app.app_context():
         db.create_all()
-
-        user = User.query.filter_by(name='admin')
+     
+        user = User.query.filter_by(name='admin').first()
         if not user:
+            print('shubham')
             admin_user = User(
                 name="admin",
                 email="admin@gmail.com",
-                password=generate_password_hash("admin"),
+                password="admin",
                 role="admin",
                 is_approved=True
             )
