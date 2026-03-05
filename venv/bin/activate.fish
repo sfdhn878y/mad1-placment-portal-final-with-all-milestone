@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV /home/shubham/Desktop/youtube-mad1/venv
+set -gx VIRTUAL_ENV '/home/shubham/Desktop/all folders/youtube-mad1/venv'
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"bin $PATH

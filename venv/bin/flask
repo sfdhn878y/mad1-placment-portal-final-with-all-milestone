@@ -1,4 +1,6 @@
-#!/home/shubham/Desktop/youtube-mad1/venv/bin/python3
+#!/bin/sh
+'''exec' "/home/shubham/Desktop/all folders/youtube-mad1/venv/bin/python3" "$0" "$@"
+' '''
 # -*- coding: utf-8 -*-
 import re
 import sys

@@ -268,7 +268,22 @@ def login():
 
     return render_template("login.html")
 
+@app.route("/admin/job/<int:job_id>/applications")
+def admin_job_applications(job_id):
 
+    # security check
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect("/login")
+
+    job = Job.query.get_or_404(job_id)
+
+    applications = Application.query.filter_by(job_id=job.id).all()
+
+    return render_template(
+        "admin_job_applications.html",
+        job=job,
+        applications=applications
+    )
 
 @app.route("/company_dashboard")
 def company_dashboard():
@@ -596,6 +611,9 @@ def complete_student_profile():
 @app.route("/admin_dashboard")
 def admin_dashboard():
 
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect("/login")
+
     total_students = User.query.filter_by(role="student").count()
     total_companies = User.query.filter_by(role="company").count()
     total_jobs = Job.query.count()
@@ -604,6 +622,12 @@ def admin_dashboard():
     pending_companies = User.query.filter_by(role="company", is_approved=False).all()
     pending_jobs = Job.query.filter_by(is_approved=False).all()
 
+    all_students = User.query.filter_by(role="student").all()
+    all_companies = User.query.filter_by(role="company").all()
+
+    # 🔥 NEW: get all jobs
+    all_jobs = Job.query.order_by(Job.posted_at.desc()).all()
+
     return render_template(
         "admin_dashboard.html",
         total_students=total_students,
@@ -611,8 +635,81 @@ def admin_dashboard():
         total_jobs=total_jobs,
         total_applications=total_applications,
         pending_companies=pending_companies,
-        pending_jobs=pending_jobs
+        pending_jobs=pending_jobs,
+        all_students=all_students,
+        all_companies=all_companies,
+        all_jobs=all_jobs   # 🔥 PASS THIS
     )
+
+@app.route("/admin/company/<int:user_id>")
+def admin_view_company(user_id):
+
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect("/login")
+
+    user = User.query.get_or_404(user_id)
+    company_profile = CompanyProfile.query.filter_by(user_id=user.id).first()
+
+    jobs = []
+    if company_profile:
+        jobs = Job.query.filter_by(company_id=company_profile.id).all()
+
+    return render_template(
+        "admin_company_detail.html",
+        user=user,
+        company_profile=company_profile,
+        jobs=jobs
+    )
+@app.route("/admin_student/<int:user_id>")
+def admin_view_student(user_id):
+
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect("/login")
+
+    user = User.query.get_or_404(user_id)
+    student_profile = StudentProfile.query.filter_by(user_id=user.id).first()
+
+    applications = []
+    if student_profile:
+        applications = Application.query.filter_by(student_id=student_profile.id).all()
+
+    return render_template(
+        "admin_student_detail.html",
+        user=user,
+        student_profile=student_profile,
+        applications=applications
+    )
+
+@app.route("/admin/company/<int:user_id>/blacklist")
+def blacklist_company(user_id):
+    user = User.query.get_or_404(user_id)
+    user.is_active = False
+    db.session.commit()
+    return redirect("/admin_dashboard")
+
+
+@app.route("/admin/company/<int:user_id>/unblacklist")
+def unblacklist_company(user_id):
+    user = User.query.get_or_404(user_id)
+    user.is_active = True
+    db.session.commit()
+    return redirect("/admin_dashboard")
+
+
+@app.route("/admin/student/<int:user_id>/blacklist")
+def blacklist_student(user_id):
+    user = User.query.get_or_404(user_id)
+    user.is_active = False
+    db.session.commit()
+    return redirect("/admin_dashboard")
+
+
+@app.route("/admin/student/<int:user_id>/unblacklist")
+def unblacklist_student(user_id):
+    user = User.query.get_or_404(user_id)
+    user.is_active = True
+    db.session.commit()
+    return redirect("/admin_dashboard")
 
 @app.route("/admin/company/<int:user_id>/approve")
 def approve_company(user_id):
@@ -631,7 +728,7 @@ def reject_company(user_id):
     user.is_active = False
     db.session.commit()
 
-    return redirect("/admin/dashboard")
+    return redirect("/admin_dashboard")
 
 @app.route("/admin/job/<int:job_id>/approve")
 def approve_job(job_id):
@@ -640,7 +737,7 @@ def approve_job(job_id):
     job.is_approved = True
     db.session.commit()
 
-    return redirect("/admin/dashboard")
+    return redirect("/admin_dashboard")
 
 
 @app.route("/admin/job/<int:job_id>/reject")
@@ -650,7 +747,7 @@ def reject_job(job_id):
     job.is_closed = True
     db.session.commit()
 
-    return redirect("/admin/dashboard")
+    return redirect("/admin_dashboard")
 
 
 

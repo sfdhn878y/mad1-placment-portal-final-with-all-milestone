@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Company Detail</h2>
+
+<h3>Basic Info</h3>
+<p><strong>Name:</strong> {{ user.name }}</p>
+<p><strong>Email:</strong> {{ user.email }}</p>
+<p><strong>Phone:</strong> {{ user.phone }}</p>
+
+{% if company_profile %}
+
+<hr>
+
+<h3>Company Profile</h3>
+<p><strong>Company Name:</strong> {{ company_profile.company_name }}</p>
+<p><strong>Industry:</strong> {{ company_profile.industry }}</p>
+<p><strong>Location:</strong> {{ company_profile.location }}</p>
+<p><strong>Website:</strong> {{ company_profile.website }}</p>
+<p><strong>Company Size:</strong> {{ company_profile.company_size }}</p>
+
+<hr>
+
+<h3>Posted Jobs</h3>
+
+{% if jobs %}
+<table border="1" cellpadding="10" cellspacing="0">
+    <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>Description</th>
+        <th>Skills</th>
+        <th>Salary</th>
+        <th>Job Type</th>
+        <th>Status</th>
+        <th>Posted Date</th>
+        <th>Applications</th>
+    </tr>
+
+    {% for job in jobs %}
+    <tr>
+        <td>{{ job.id }}</td>
+        <td>{{ job.title }}</td>
+        <td>{{ job.description }}</td>
+        <td>{{ job.skills }}</td>
+        <td>{{ job.salary }}</td>
+        <td>{{ job.job_type }}</td>
+
+        <td>
+            {% if job.is_closed %}
+                <span style="color:red;"><strong>Closed</strong></span>
+            {% elif job.is_approved %}
+                <span style="color:green;"><strong>Approved</strong></span>
+            {% else %}
+                <span style="color:orange;"><strong>Pending</strong></span>
+            {% endif %}
+        </td>
+
+        <td>
+            {% if job.posted_at %}
+                {{ job.posted_at.strftime("%d-%m-%Y") }}
+            {% else %}
+                N/A
+            {% endif %}
+        </td>
+
+        <td>{{ job.applications|length }}</td>
+    </tr>
+    <td>
+    <a href="/admin/job/{{ job.id }}/applications">
+        View Details
+    </a>
+</td>
+    {% endfor %}
+</table>
+
+{% else %}
+<p><em>No jobs posted by this company.</em></p>
+{% endif %}
+
+{% else %}
+<p><em>No company profile found.</em></p>
+{% endif %}
+
+<br>
+<a href="/admindashboard">⬅ Back to Dashboard</a>
+
+{% endblock %}
