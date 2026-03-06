@@ -84,7 +84,14 @@
         </tr>
         {% endfor %}
     </table>
+<h3 class="section-title">Search Companies</h3>
 
+<form method="GET" action="/admin_dashboard" style="margin-bottom:15px;">
+    <input type="text" name="company_search"
+           placeholder="Search company by name or email"
+           style="padding:8px; width:300px; border-radius:4px; border:none;">
+    <button class="btn view">Search</button>
+</form>
 
     <!-- ===================== ALL COMPANIES ===================== -->
     <h3 class="section-title">All Companies</h3>
@@ -120,8 +127,14 @@
         </tr>
         {% endfor %}
     </table>
+<h3 class="section-title">Search Students</h3>
 
-
+<form method="GET" action="/admin_dashboard" style="margin-bottom:15px;">
+    <input type="text" name="student_search"
+           placeholder="Search student by name, email, phone"
+           style="padding:8px; width:300px; border-radius:4px; border:none;">
+    <button class="btn view">Search</button>
+</form>
     <!-- ===================== ALL STUDENTS ===================== -->
     <h3 class="section-title">All Students</h3>
 

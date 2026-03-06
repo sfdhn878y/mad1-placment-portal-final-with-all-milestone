@@ -216,10 +216,10 @@
             <!-- TOGGLE STATUS -->
             <a href="/toggle-job/{{ job.id }}">
                 <button class="btn logout">
-                    {% if job.job_status == "Active" %}
-                    Close Job
-                    {% else %}
+                    {% if job.is_closed %}
                     Activate Job
+                    {% else %}
+                    Close Job
                     {% endif %}
                 </button>
             </a>

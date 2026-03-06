@@ -65,7 +65,7 @@ class StudentProfile(db.Model):
     # relation to User
     user = db.relationship("User", back_populates="student_profile")
 
-    # 🔥 ADD THIS (very important)
+    #  ADD THIS (very important)
     applications = db.relationship(
         "Application",
         back_populates="student"
@@ -147,10 +147,7 @@ class Application(db.Model):
     # many to one many applications sent by one student
     student = db.relationship("StudentProfile", back_populates="applications")
 
-# =====================
-# APP START
-# =====================
-
+#
 @app.route("/company-details/<int:company_id>")
 def company_details(company_id):
 
@@ -168,28 +165,46 @@ def company_details(company_id):
 def index():
     return render_template('index.html')
 
-@app.route('/post-job',methods=['GET','POST'])
+@app.route('/post-job', methods=['GET','POST'])
 def job_post():
-    if request.method == 'POST':
-        if "user_id" not in session:
-            return redirect("/login")
 
-        company = CompanyProfile.query.filter_by(user_id=session["user_id"]).first()
+    if "user_id" not in session:
+        return redirect("/login")
 
-        if not company:
-            return "Please complete company profile first"
+    company = CompanyProfile.query.filter_by(
+        user_id=session["user_id"]
+    ).first()
 
-        if request.method == "POST":
-            job = Job(
-                company_id=company.id,
-                title=request.form["title"],
-                skills=request.form["skills"],
-                salary=request.form["salary"],
+    if not company:
+        return "Please complete company profile first"
 
-            )
+    if request.method == "POST":
 
-            db.session.add(job)
-            db.session.commit()
+        title = request.form["title"]
+        skills = request.form["skills"]
+        salary = request.form["salary"]
+
+        # check duplicate job for same company
+        existing_job = Job.query.filter_by(
+            company_id=company.id,
+            title=title,
+            skills=skills,
+            salary=salary
+        ).first()
+
+        if existing_job:
+            return "⚠ This job is already posted"
+
+        # create new job
+        job = Job(
+            company_id=company.id,
+            title=title,
+            skills=skills,
+            salary=salary
+        )
+
+        db.session.add(job)
+        db.session.commit()
 
         return redirect("/company_dashboard")
 
@@ -504,6 +519,97 @@ def toggle_status(app_id, action):
 
     return redirect(request.referrer)
 
+#################################################
+
+
+
+@app.route("/toggle-job/<int:job_id>")
+def toggle_job(job_id):
+
+    # simple login check
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if session.get("role") != "company":
+        return "Unauthorized", 403
+
+    # get company
+    company = CompanyProfile.query.filter_by(
+        user_id=session["user_id"]
+    ).first()
+
+    if not company:
+        return "Company not found"
+
+    # get job that belongs to this company
+    job = Job.query.filter_by(
+        id=job_id,
+        company_id=company.id
+    ).first()
+
+    if not job:
+        return "Job not found"
+
+    # toggle status
+    if job.is_closed:
+        job.is_closed = False
+    else:
+        job.is_closed = True
+
+    db.session.commit()
+
+    # go back to dashboard
+    return redirect("/company_dashboard")
+
+
+######################################################
+
+
+@app.route("/edit-job/<int:job_id>", methods=["GET", "POST"])
+def edit_job(job_id):
+
+    # basic login check
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if session.get("role") != "company":
+        return "Unauthorized", 403
+
+    # get company of logged in user
+    company = CompanyProfile.query.filter_by(
+        user_id=session["user_id"]
+    ).first()
+
+    if not company:
+        return "Company profile not found"
+
+    # make sure job belongs to this company
+    job = Job.query.filter_by(
+        id=job_id,
+        company_id=company.id
+    ).first()
+
+    if not job:
+        return "Job not found"
+
+    # if form submitted
+    if request.method == "POST":
+
+        # updating fields
+        job.title = request.form["title"]
+        job.skills = request.form["skills"]
+        job.salary = request.form["salary"]
+
+        # small thing so admin can recheck
+        job.is_approved = False
+
+        db.session.commit()
+
+        return redirect("/company_dashboard")
+
+    # show edit form
+    return render_template("edit_job.html", job=job)
+
 ###########################
 
 @app.route("/student_dashboard")
@@ -608,11 +714,17 @@ def complete_student_profile():
 #####################
 # admin dashboard 
 #####################
+
+
 @app.route("/admin_dashboard")
 def admin_dashboard():
 
     if "user_id" not in session or session.get("role") != "admin":
         return redirect("/login")
+
+    # search inputs
+    student_search = request.args.get("student_search")
+    company_search = request.args.get("company_search")
 
     total_students = User.query.filter_by(role="student").count()
     total_companies = User.query.filter_by(role="company").count()
@@ -622,10 +734,30 @@ def admin_dashboard():
     pending_companies = User.query.filter_by(role="company", is_approved=False).all()
     pending_jobs = Job.query.filter_by(is_approved=False).all()
 
-    all_students = User.query.filter_by(role="student").all()
-    all_companies = User.query.filter_by(role="company").all()
+    # ---------- STUDENT SEARCH ----------
+    students_query = User.query.filter_by(role="student")
 
-    # 🔥 NEW: get all jobs
+    if student_search:
+        students_query = students_query.filter(
+            (User.name.ilike(f"%{student_search}%")) |
+            (User.email.ilike(f"%{student_search}%")) |
+            (User.phone.ilike(f"%{student_search}%"))
+        )
+
+    all_students = students_query.all()
+
+    # ---------- COMPANY SEARCH ----------
+    companies_query = User.query.filter_by(role="company")
+
+    if company_search:
+        companies_query = companies_query.filter(
+            (User.name.ilike(f"%{company_search}%")) |
+            (User.email.ilike(f"%{company_search}%"))
+        )
+
+    all_companies = companies_query.all()
+
+    # jobs
     all_jobs = Job.query.order_by(Job.posted_at.desc()).all()
 
     return render_template(
@@ -638,7 +770,7 @@ def admin_dashboard():
         pending_jobs=pending_jobs,
         all_students=all_students,
         all_companies=all_companies,
-        all_jobs=all_jobs   # 🔥 PASS THIS
+        all_jobs=all_jobs
     )
 
 @app.route("/admin/company/<int:user_id>")
@@ -660,18 +792,30 @@ def admin_view_company(user_id):
         company_profile=company_profile,
         jobs=jobs
     )
-@app.route("/admin_student/<int:user_id>")
+@app.route("/admin/student/<int:user_id>")
 def admin_view_student(user_id):
 
-    if "user_id" not in session or session.get("role") != "admin":
+    # simple security check
+    if "user_id" not in session:
         return redirect("/login")
 
+    if session.get("role") != "admin":
+        return "Unauthorized", 403
+
+    # get user
     user = User.query.get_or_404(user_id)
-    student_profile = StudentProfile.query.filter_by(user_id=user.id).first()
+
+    # get student profile
+    student_profile = StudentProfile.query.filter_by(
+        user_id=user.id
+    ).first()
 
     applications = []
+
     if student_profile:
-        applications = Application.query.filter_by(student_id=student_profile.id).all()
+        applications = Application.query.filter_by(
+            student_id=student_profile.id
+        ).all()
 
     return render_template(
         "admin_student_detail.html",

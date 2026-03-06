@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container">
+
+<h2>Student Details</h2>
+
+<div class="card">
+<p><b>Name:</b> {{ user.name }}</p>
+<p><b>Email:</b> {{ user.email }}</p>
+
+{% if student_profile %}
+<p><b>Department:</b> {{ student_profile.department }}</p>
+<p><b>CGPA:</b> {{ student_profile.cgpa }}</p>
+<p><b>Skills:</b> {{ student_profile.skills }}</p>
+<p><b>Resume:</b> {{ student_profile.resume }}</p>
+{% else %}
+<p style="color:orange;">Profile not completed</p>
+{% endif %}
+</div>
+
+<h3>Applications</h3>
+
+{% for app in applications %}
+
+<div class="card">
+<p><b>Company:</b> {{ app.job.company.company_name }}</p>
+<p><b>Job:</b> {{ app.job.title }}</p>
+<p><b>Status:</b> {{ app.status }}</p>
+<p><b>Applied On:</b> {{ app.applied_at }}</p>
+</div>
+
+{% else %}
+
+<p>No applications yet.</p>
+
+{% endfor %}
+
+</div>
+
+<style>
+.container{
+width:900px;
+margin:40px auto;
+}
+
+.card{
+background:#1e293b;
+padding:20px;
+border-radius:8px;
+margin-bottom:20px;
+}
+</style>
+
+{% endblock %}
